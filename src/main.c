@@ -209,39 +209,20 @@ int main(void)
     /* Enable codec */
     i2s_dma_full_duplex_setup(CODEC_SAMPLE_RATE);
 
+    /* Simple sine wave output parameters */
+    float theta = 0.;
+    float f0 = 1000; /* frequency in Hz */
+
     while (1) {
         while (!(codecDmaTxPtr && codecDmaRxPtr));
-        if ((MMSeq_getCurrentTime(sequence) % eventPeriod) == 0) {
-            /* Make event */
-            NoteOnEvent *noe = NoteOnEvent_new();
-            MMPvtespParams *params = MMPvtespParams_new();
-            params->paramType = MMPvtespParamType_NOTEON;
-            params->note = get_next_free_voice_number();
-            params->amplitude = 1.0;
-            params->interpolation = MMInterpMethod_CUBIC;
-            params->index = 0;
-            params->attackTime = ATTACK_TIME;
-            params->releaseTime = RELEASE_TIME; 
-            params->samples = &samples;
-            params->loop = 1;
-            params->rate = playbackRate;
-            params->rateSource = MMPvtespRateSource_RATE;
-            NoteOnEvent_init(noe,pvm,params,sequence,eventLength);
-            /* Schedule event to happen now */
-            MMSeq_scheduleEvent(sequence,(MMEvent*)noe,MMSeq_getCurrentTime(sequence));
-        }
-        /* Do scheduled events and tick */
-        MMSeq_doAllCurrentEvents(sequence);
-        MMSeq_tick(sequence);
-        MIDI_process_buffer(); /* process MIDI at most every audio block */
-        MMSigProc_tick(&sigChain);
         size_t i;
         for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
             /* write out data */
-            codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
-            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
+            codecDmaTxPtr[i] = FLOAT_TO_INT16(sinf(theta));
+            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(sinf(theta));
             /* read in data */
             inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i+1]);
+            theta += 2.*M_PI*f0/(float)CODEC_SAMPLE_RATE;
         }
         codecDmaTxPtr = NULL;
         codecDmaRxPtr = NULL;
