@@ -286,16 +286,16 @@ void DMA1_Stream7_IRQHandler(void)
     NVIC_ClearPendingIRQ(DMA1_Stream7_IRQn);
     /* If transfer complete on stream 5 (memory to peripheral), set current tx
      * pointer to half of the buffer */
-    if (DMA1->HISR & DMA_HISR_TCIF5) {
+    if (DMA1->HISR & DMA_HISR_TCIF7) {
         /* clear flag */
-        DMA1->HIFCR = DMA_HIFCR_CTCIF5;
+        DMA1->HIFCR = DMA_HIFCR_CTCIF7;
         codecDmaTxPtr = codecDmaTxBuf + CODEC_DMA_BUF_LEN;
     }
     /* If half of transfer complete on stream 5 (memory to peripheral), set current tx
      * pointer to beginning of the buffer */
-    if (DMA1->HISR & DMA_HISR_HTIF5) {
+    if (DMA1->HISR & DMA_HISR_HTIF7) {
         /* clear flag */
-        DMA1->HIFCR = DMA_HIFCR_CHTIF5;
+        DMA1->HIFCR = DMA_HIFCR_CHTIF7;
         codecDmaTxPtr = codecDmaTxBuf;
     }
 }
