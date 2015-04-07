@@ -105,10 +105,10 @@ void MIDI_process_buffer(void)
 
 void DMA1_Stream5_IRQHandler (void)
 {
-    if (DMA_GetITStatus(DMA1_Stream5, DMA_IT_TCIF6)
-            && DMA_GetFlagStatus(DMA1_Stream5, DMA_FLAG_TCIF6)) {
-        DMA_ClearITPendingBit(DMA1_Stream5, DMA_IT_TCIF6);
-        DMA_ClearFlag(DMA1_Stream5, DMA_FLAG_TCIF6);
+    if (DMA_GetITStatus(DMA1_Stream5, DMA_IT_TCIF5)
+            && DMA_GetFlagStatus(DMA1_Stream5, DMA_FLAG_TCIF5)) {
+        DMA_ClearITPendingBit(DMA1_Stream5, DMA_IT_TCIF5);
+        DMA_ClearFlag(DMA1_Stream5, DMA_FLAG_TCIF5);
     }
     NVIC_ClearPendingIRQ(DMA1_Stream5_IRQn);
 }

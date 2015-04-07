@@ -212,17 +212,28 @@ int main(void)
     /* Simple sine wave output parameters */
     float theta = 0.;
     float f0 = 1000; /* frequency in Hz */
+    int lenx = 650;
+    float x[lenx];
+    int x_idx = 0;
+    for (x_idx = 0; x_idx < lenx; x_idx++) {
+        x[x_idx] = sin(2.*M_PI*((float)x_idx/(float)lenx)*2.);
+    }
+    x_idx = 0;
 
     while (1) {
         while (!(codecDmaTxPtr && codecDmaRxPtr));
         size_t i;
         for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
             /* write out data */
-            codecDmaTxPtr[i] = FLOAT_TO_INT16(sinf(theta));
-            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(sinf(theta));
+            codecDmaTxPtr[i] = FLOAT_TO_INT16(x[x_idx]);
+            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(x[x_idx]);
             /* read in data */
             inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i+1]);
-            theta += 2.*M_PI*f0/(float)CODEC_SAMPLE_RATE;
+//            theta += 2.*M_PI*f0/(float)CODEC_SAMPLE_RATE;
+//            x_idx = ((int)((float)x_idx + (float)lenx*f0/(float)CODEC_SAMPLE_RATE)
+//                    % lenx);
+
+            x_idx = (x_idx + 1) % lenx;
         }
         codecDmaTxPtr = NULL;
         codecDmaRxPtr = NULL;
