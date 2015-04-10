@@ -209,34 +209,34 @@ int main(void)
     /* Enable codec */
     i2s_dma_full_duplex_setup(CODEC_SAMPLE_RATE);
 
+    /* Simple sine wave output parameters */
+    float theta = 0.;
+    float f0 = 1000; /* frequency in Hz */
+    int lenx = 650;
+    float x[lenx];
+    int x_idx = 0;
+    for (x_idx = 0; x_idx < lenx; x_idx++) {
+        x[x_idx] = sin(2.*M_PI*((float)x_idx/(float)lenx)*2.);
+    }
+    x_idx = 0;
+
+    int outputMode = 0;
+    int outputBlockCount = 0;
+    int outputSwitchNumBlocks = CODEC_SAMPLE_RATE / (CODEC_DMA_BUF_LEN/2) /32;
+
     while (1) {
         while (!(codecDmaTxPtr && codecDmaRxPtr));
-        if ((MMSeq_getCurrentTime(sequence) % eventPeriod) == 0) {
-            /* Make event */
-            NoteOnEvent *noe = NoteOnEvent_new();
-            MMPvtespParams *params = MMPvtespParams_new();
-            params->paramType = MMPvtespParamType_NOTEON;
-            params->note = get_next_free_voice_number();
-            params->amplitude = 1.0;
-            params->interpolation = MMInterpMethod_CUBIC;
-            params->index = 0;
-            params->attackTime = ATTACK_TIME;
-            params->releaseTime = RELEASE_TIME; 
-            params->samples = &samples;
-            params->loop = 1;
-            params->rate = playbackRate;
-            params->rateSource = MMPvtespRateSource_RATE;
-            NoteOnEvent_init(noe,pvm,params,sequence,eventLength);
-            /* Schedule event to happen now */
-            MMSeq_scheduleEvent(sequence,(MMEvent*)noe,MMSeq_getCurrentTime(sequence));
-        }
-        /* Do scheduled events and tick */
-        MMSeq_doAllCurrentEvents(sequence);
-        MMSeq_tick(sequence);
-        MIDI_process_buffer(); /* process MIDI at most every audio block */
-        MMSigProc_tick(&sigChain);
         size_t i;
-        memcpy(codecDmaTxPtr,codecDmaRxPtr,CODEC_DMA_BUF_LEN * sizeof(int16_t));
+        if (outputBlockCount++ >= outputSwitchNumBlocks) {
+            outputMode = 1 - outputMode;
+            outputBlockCount = 0;
+        }
+        if (outputMode == 1) {
+            /* Output the input */
+            memcpy(codecDmaTxPtr,codecDmaRxPtr,CODEC_DMA_BUF_LEN * sizeof(int16_t));
+        } else if (outputMode == 0) {
+            memset(codecDmaTxPtr,0,CODEC_DMA_BUF_LEN * sizeof(int16_t));
+        }
         //for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
         //    /* write out data */
         //    codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.1);
