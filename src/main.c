@@ -226,6 +226,21 @@ int main(void)
     /* Enable codec */
     i2s_dma_full_duplex_setup(CODEC_SAMPLE_RATE);
 
+    /* Simple sine wave output parameters */
+    float theta = 0.;
+    float f0 = 1000; /* frequency in Hz */
+    int lenx = 650;
+    float x[lenx];
+    int x_idx = 0;
+    for (x_idx = 0; x_idx < lenx; x_idx++) {
+        x[x_idx] = sin(2.*M_PI*((float)x_idx/(float)lenx)*2.);
+    }
+    x_idx = 0;
+
+    int outputMode = 0;
+    int outputBlockCount = 0;
+    int outputSwitchNumBlocks = CODEC_SAMPLE_RATE / (CODEC_DMA_BUF_LEN/2) /32;
+
     while (1) {
         while (!(codecDmaTxPtr && codecDmaRxPtr));
         //if ((MMSeq_getCurrentTime(sequence) % eventPeriod) == 0) {
@@ -253,13 +268,23 @@ int main(void)
         MIDI_process_buffer(); /* process MIDI at most every audio block */
         MMSigProc_tick(&sigChain);
         size_t i;
-        for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
-            /* write out data */
-            codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
-            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
-            /* read in data */
-            inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i+1]);
+        if (outputBlockCount++ >= outputSwitchNumBlocks) {
+            outputMode = 1 - outputMode;
+            outputBlockCount = 0;
         }
+        if (outputMode == 1) {
+            /* Output the input */
+            memcpy(codecDmaTxPtr,codecDmaRxPtr,CODEC_DMA_BUF_LEN * sizeof(int16_t));
+        } else if (outputMode == 0) {
+            memset(codecDmaTxPtr,0,CODEC_DMA_BUF_LEN * sizeof(int16_t));
+        }
+        //for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
+        //    /* write out data */
+        //    codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.1);
+        //    codecDmaTxPtr[i+1] = FLOAT_TO_INT16(outBus->data[i/2] * 0.1);
+        //    /* read in data */
+        //    inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i+1]);
+        //}
         codecDmaTxPtr = NULL;
         codecDmaRxPtr = NULL;
     }

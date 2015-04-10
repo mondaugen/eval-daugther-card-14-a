@@ -5,19 +5,19 @@ char midiBuffer[MIDI_BUF_SIZE];
 int MIDIlastIndex = 0;
 int MIDITimeToProcessBuffer = 0;
 
-static void UART8_Enable_Rx(void)
+static void USART2_Enable_Rx(void)
 {
     GPIO_InitTypeDef  GPIO_USART_InitStruct;
     USART_InitTypeDef USART_InitStruct;
     DMA_InitTypeDef   DMA_InitStruct;
 
     /* Enable Clocks */
-    RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART8, ENABLE);
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
 
     /* Set up GPIO for alternate function */
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource0,GPIO_AF_UART8);
+    GPIO_PinAFConfig(GPIOE,GPIO_PinSource0,GPIO_AF_USART2);
 
     /* Configure GPIO to transmit */
     GPIO_USART_InitStruct.GPIO_Mode = GPIO_Mode_AF;
@@ -33,19 +33,14 @@ static void UART8_Enable_Rx(void)
     USART_InitStruct.USART_Parity = USART_Parity_No;
     USART_InitStruct.USART_Mode = USART_Mode_Rx;
     USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_Init(UART8, &USART_InitStruct);
+    USART_Init(USART2, &USART_InitStruct);
 
     /* Enable UART */
-    USART_Cmd(UART8, ENABLE);
-
-    /* no DMA interrupts */
-//    DMA_ITConfig(DMA1_Stream6, DMA_IT_TC, ENABLE);
-//    NVIC_EnableIRQ(DMA1_Stream6_IRQn);
-
+    USART_Cmd(USART2, ENABLE);
 
     DMA_StructInit(&DMA_InitStruct);
-    DMA_InitStruct.DMA_Channel = DMA_Channel_5;
-    DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)(&(UART8->DR));
+    DMA_InitStruct.DMA_Channel = DMA_Channel_4;
+    DMA_InitStruct.DMA_PeripheralBaseAddr = (uint32_t)(&(USART2->DR));
     DMA_InitStruct.DMA_Memory0BaseAddr = (uint32_t)midiBuffer;
     DMA_InitStruct.DMA_DIR = DMA_DIR_PeripheralToMemory;
     DMA_InitStruct.DMA_BufferSize = MIDI_BUF_SIZE;
@@ -58,14 +53,14 @@ static void UART8_Enable_Rx(void)
     DMA_InitStruct.DMA_FIFOMode = DMA_FIFOMode_Disable;
     DMA_InitStruct.DMA_MemoryBurst = DMA_MemoryBurst_Single;
     DMA_InitStruct.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-    DMA_Init(DMA1_Stream6, &DMA_InitStruct);
-    DMA_Cmd(DMA1_Stream6, ENABLE);
+    DMA_Init(DMA1_Stream5, &DMA_InitStruct);
+    DMA_Cmd(DMA1_Stream5, ENABLE);
 
     /* Connect UART to DMA */
-    USART_DMACmd(UART8, USART_DMAReq_Rx, ENABLE);
+    USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);
 
     /* wait for DMA to be enabled */
-    while (DMA_GetCmdStatus(DMA1_Stream6) != ENABLE);
+    while (DMA_GetCmdStatus(DMA1_Stream5) != ENABLE);
 
 }
 
@@ -85,7 +80,7 @@ static void Timer_setup(void)
 
 void MIDI_low_level_setup(void)
 {
-    UART8_Enable_Rx();
+    USART2_Enable_Rx();
     Timer_setup();
 }
     
@@ -108,15 +103,14 @@ void MIDI_process_buffer(void)
     }
 }
 
-void DMA1_Stream6_IRQHandler (void)
+void DMA1_Stream5_IRQHandler (void)
 {
-    if (DMA_GetITStatus(DMA1_Stream6, DMA_IT_TCIF6)
-            && DMA_GetFlagStatus(DMA1_Stream6, DMA_FLAG_TCIF6)) {
-//        LEDs_greenToggle();
-        DMA_ClearITPendingBit(DMA1_Stream6, DMA_IT_TCIF6);
-        DMA_ClearFlag(DMA1_Stream6, DMA_FLAG_TCIF6);
+    if (DMA_GetITStatus(DMA1_Stream5, DMA_IT_TCIF5)
+            && DMA_GetFlagStatus(DMA1_Stream5, DMA_FLAG_TCIF5)) {
+        DMA_ClearITPendingBit(DMA1_Stream5, DMA_IT_TCIF5);
+        DMA_ClearFlag(DMA1_Stream5, DMA_FLAG_TCIF5);
     }
-    NVIC_ClearPendingIRQ(DMA1_Stream6_IRQn);
+    NVIC_ClearPendingIRQ(DMA1_Stream5_IRQn);
 }
 
 void TIM2_IRQHandler(void)
