@@ -17,14 +17,14 @@ static void USART2_Enable_Rx(void)
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
 
     /* Set up GPIO for alternate function */
-    GPIO_PinAFConfig(GPIOE,GPIO_PinSource0,GPIO_AF_USART2);
+    GPIO_PinAFConfig(GPIOD,GPIO_PinSource6,GPIO_AF_USART2);
 
     /* Configure GPIO to transmit */
     GPIO_USART_InitStruct.GPIO_Mode = GPIO_Mode_AF;
     GPIO_USART_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_USART_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
-    GPIO_USART_InitStruct.GPIO_Pin = GPIO_Pin_0;
-    GPIO_Init(GPIOE, &GPIO_USART_InitStruct);
+    GPIO_USART_InitStruct.GPIO_Pin = GPIO_Pin_6;
+    GPIO_Init(GPIOD, &GPIO_USART_InitStruct);
 
     /* Configure USART */
     USART_InitStruct.USART_BaudRate = MIDI_BAUD_RATE;

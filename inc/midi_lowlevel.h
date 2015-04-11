@@ -3,7 +3,7 @@
 
 #include "stm32f4xx.h" 
 
-#define MIDI_DMA_STRUCT DMA1_Stream6 
+#define MIDI_DMA_STRUCT DMA1_Stream5 
 
 /* This should be automated according to current clock speed and dividers, keep
  * it simple for now */
