@@ -116,7 +116,7 @@ void MIDI_cc_rate_control(void *data, MIDIMsg *msg)
 
 void MIDI_cc_period_control(void *data, MIDIMsg *msg)
 {
-    *((int*)data) = msg->data[2] * 2 + 1;
+    *((int*)data) = msg->data[2] * 10 + 1;
 }
 
 void MIDI_cc_length_control(void *data, MIDIMsg *msg)
@@ -238,10 +238,10 @@ int main(void)
         size_t i;
         for (i = 0; i < CODEC_DMA_BUF_LEN; i += 2) {
             /* write out data */
-            codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
-            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(outBus->data[i/2] * 0.01);
+            codecDmaTxPtr[i] = FLOAT_TO_INT16(outBus->data[i/2] * 0.1);
+            codecDmaTxPtr[i+1] = FLOAT_TO_INT16(outBus->data[i/2] * 0.1);
             /* read in data */
-            inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i+1]);
+            inBus->data[i/2] = INT16_TO_FLOAT(codecDmaRxPtr[i]);
         }
         codecDmaTxPtr = NULL;
         codecDmaRxPtr = NULL;
