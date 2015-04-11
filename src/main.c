@@ -84,37 +84,6 @@ SynthEnvironment synthEnvironment = {
 };
 
 
-void MIDI_note_on_do(void *data, MIDIMsg *msg)
-{
-    MMPvtespParams *params = MMPvtespParams_new();
-    params->paramType = MMPvtespParamType_NOTEON;
-    params->note = (MMSample)msg->data[1];
-    params->amplitude = (MMSample)msg->data[2] / 127.;
-    params->interpolation = MMInterpMethod_CUBIC;
-    params->index = 0;
-    params->attackTime = ATTACK_TIME;
-    /* this is the time a note that is stolen will take to decay */
-    params->releaseTime = SHORT_RELEASE_TIME; 
-    params->samples = &samples;
-    params->loop = 1;
-    params->rate = playbackRate;
-    params->rateSource = MMPvtespRateSource_RATE;
-    MMPolyManager_noteOn(pvm, (void*)params, 
-            MMPolyManagerSteal_FALSE, MMPolyManagerRetrigger_FALSE);
-    MIDIMsg_free(msg);
-}
-
-void MIDI_note_off_do(void *data, MIDIMsg *msg)
-{
-    MMPvtespParams *params = MMPvtespParams_new();
-    params->paramType = MMPvtespParamType_NOTEOFF;
-    params->note = (MMSample)msg->data[1];
-    params->amplitude = (MMSample)msg->data[2] / 127.;
-    params->releaseTime = RELEASE_TIME;
-    MMPolyManager_noteOff(pvm, (void*)params);
-    MIDIMsg_free(msg);
-}
-
 void MIDI_cc_do(void *data, MIDIMsg *msg)
 {
     if (msg->data[2]) {
@@ -175,21 +144,22 @@ int main(void)
     MMSigProc_insertAfter(&sigChain.sigProcs,&sigConst);
 
     /* initialize wavetables */
-    WaveTable_init();
-
+//    WaveTable_init();
+    WaveTable_init_sin(SHORT_WAVTABLE_LENGTH_SAMPLES);
+    
     /* Give access to samples of sound as wave table */
     MMArray_set_data(&samples, WaveTable);
-    MMArray_set_length(&samples, WAVTABLE_LENGTH_SAMPLES); 
+    MMArray_set_length(&samples, SHORT_WAVTABLE_LENGTH_SAMPLES); 
     /* Set with this samplerate so it plays at normal speed when midi note 69
      * received */
-    samples.samplerate = 440 * WAVTABLE_LENGTH_SAMPLES;//CODEC_SAMPLE_RATE;
+    samples.samplerate = CODEC_SAMPLE_RATE;
 
     /* Allow MMWavTabRecorder to record into samples */
     MMWavTabRecorder_init(&wtr);
     wtr.buffer = &samples;
     wtr.inputBus = inBus;
     wtr.currentIndex = 0;
-    wtr.state = MMWavTabRecorderState_RECORDING;
+    wtr.state = MMWavTabRecorderState_STOPPED;
 
     /* Put MMWavTabRecorder at the top of the signal chain */
     MMSigProc_insertAfter(&sigChain.sigProcs,&wtr);
